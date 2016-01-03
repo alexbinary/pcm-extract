@@ -2,7 +2,7 @@
  * pcm-extract - Extract PCM data from audio/video file with ffmpeg
  *
  * The MIT License (MIT)
- * Copyright (c) 2015 Alexandre Bintz <alexandre@bintz.io>
+ * Copyright (c) 2016 Alexandre Bintz <alexandre@bintz.io>
  */
 
 'use strict';
