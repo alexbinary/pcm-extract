@@ -13,11 +13,13 @@ module.exports = {
    * Get readable stream of PCM data.
    *
    * @param opts object with following keys
-   * - filepath   string  path to source file (required)
-   * - channels   number  number of audio channels, default 2
-   * - sampleRate number  number of samples per channel per second, default 44100
-   * - start      number  start time in ms, default begining of file
-   * - end        number  end time in ms, default end of file
+   * - filepath      string   path to source file (required)
+   * - channels      number   number of audio channels, default 2
+   * - sampleRate    number   number of samples per channel per second, default 44100
+   * - start         number   start time in ms, default begining of file
+   * - end           number   end time in ms, default end of file
+   * - init          function hook to init decode stream
+   * - processSample function hook to process a decoded sample
    *
    * @return Readable stream in object mode, each item is a sample value
    *         values alternate between channels (L, R, L, R, ...)
@@ -57,12 +59,18 @@ module.exports = {
 
     return require('child_process')
           .spawn('ffmpeg', args)
-          .stdout.pipe(getDecodeStream());
+          .stdout.pipe(getDecodeStream(opts));
   },
 
 };
 
-function getDecodeStream() {
+function getDecodeStream(opts) {
+
+  const init = opts.init || function() {
+  };
+  const processSample = opts.processSample || function(sample) {
+    this.push(this.sum/this.count);
+  };
 
   var Transform = require('stream').Transform;
 
@@ -70,6 +78,7 @@ function getDecodeStream() {
     Transform.call(this, { readableObjectMode : true });
 
     this.oddByte = null;
+    init.call(this);
   }
   require('util').inherits(DecodeStream, Transform);
 
@@ -85,12 +94,12 @@ function getDecodeStream() {
     // first byte from this block
     if (this.oddByte !== null) {
       value = ((data.readInt8(i++, true) << 8) | this.oddByte) / 32767.0;
-      this.push(value);
+      processSample.call(this, value);
     }
 
     for (; i < dataLen; i += 2) {
       value = data.readInt16LE(i, true) / 32767.0;
-      this.push(value);
+      processSample.call(this, value);
     }
 
     this.oddByte = (i < dataLen) ? data.readUInt8(i, true) : null;
