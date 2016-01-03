@@ -1,0 +1,28 @@
+{
+  "name": "pcm-extract",
+  "version": "0.1.0",
+  "description": "Extract PCM data from audio/video file with ffmpeg",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexbinary/pcm-extract.git"
+  },
+  "keywords": [
+    "pcm",
+    "ffmpeg",
+    "audio",
+    "video",
+    "sound",
+    "samples",
+    "stream"
+  ],
+  "author": "Alexandre Bintz <alexandre@bintz.io>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alexbinary/pcm-extract/issues"
+  },
+  "homepage": "https://github.com/alexbinary/pcm-extract#readme"
+}
