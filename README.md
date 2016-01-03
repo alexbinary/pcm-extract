@@ -71,7 +71,7 @@ const readable = require('pcm-extract').getStream({
 
 ## License
 
-The MIT License (MIT) - Copyright (c) 2015 Alexandre Bintz <alexandre@bintz.io>  
+The MIT License (MIT) - Copyright (c) 2016 Alexandre Bintz <alexandre@bintz.io>  
 See [LICENSE](LICENSE) file for full text.
 
 Core code of this module is copied from module [pcm](https://www.npmjs.com/package/pcm) by [@jhurliman](https://www.npmjs.com/~jhurliman), licensed under the MIT License.
