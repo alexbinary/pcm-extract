@@ -47,22 +47,18 @@ Options `init` and `processSample` are functions that are called with `this` bei
 - `init` is called in the constructor, use this to e.g. init variables
 - `processSample` is called each time a sample is read and the sample value is passed as first argument. Call `this.push(sample)` inside the function to output the value on the stream.
 
-For example, if you want to average samples over 10 values, you can do :
+For example, this returns only samples of the first channel :
 ```javascript
 
 const readable = require('pcm-extract').getStream({
   filepath: '/Users/John/video.mkv',
   init = function() {
-    this.sum = 0;
-    this.count = 0;
+    this.chan = 0;
   },
   processSample = function(sample) {
-    this.sum += sample;
-    this.count +=1;
-    if (this.count === 10) {
-      this.push(this.sum/this.count);
-      this.sum = 0;
-      this.count = 0;
+    this.chan = ++this.chan%2;
+    if (this.chan === 0) {
+      this.push(sample);
     }
   },
 });
