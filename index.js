@@ -69,7 +69,7 @@ function getDecodeStream(opts) {
   const init = opts.init || function() {
   };
   const processSample = opts.processSample || function(sample) {
-    this.push(this.sum/this.count);
+    this.push(sample);
   };
 
   var Transform = require('stream').Transform;
