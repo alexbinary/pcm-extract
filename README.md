@@ -2,19 +2,25 @@
 
 > Extract PCM data from audio/video file with ffmpeg
 
+This module lets you extract a [PCM representation](https://en.wikipedia.org/wiki/Pulse-code_modulation) of the audio from any audio or video file using [ffmpeg](http://ffmpeg.org). You can get every PCM sample values on every channels from either the entire file or just a subsection as a readable stream.
+
+You need ffmpeg up and running to use this module.
+
 ## Usage
 
 ```javascript
+/* get PCM samples as a readable stream */
+
 const readable = require('pcm-extract').getStream({
   filepath: '/Users/John/video.mkv'
 });
+
+/* consume stream */
+
 readable.on('readable', function(){
-  const sample = readable.read();
-  // sample is a number representing the sample value in [-1 ; 1]
+  const sample = readable.read(); // sample value in [-1 ; 1]
 });
 ```
-
-This will spawn a [ffmpeg](http://ffmpeg.org) process so you need it up and running on your system.
 
 ## Reference
 
@@ -32,20 +38,21 @@ This will spawn a [ffmpeg](http://ffmpeg.org) process so you need it up and runn
 
 `getStream()` returns a standard readable stream in **object mode** where each item is a
 number representing the sample value in the range [-1, 1].
-By default, all samples are returned and alternate between channels, i.e. you get something like this :
-- sample0: Left0
-- sample1: Right0
-- sample2: Left1
-- sample3: Right1
+By default, all samples are returned and alternate between channels, i.e. for classic stereo :
+- sample 0: Left channel, sample 0
+- sample 1: Right channel, sample 0
+- sample 2: Left channel, sample 1
+- sample 3: Right channel, sample 1
 - ...
 
-### Custom sample processing
+### Samples preprocessing
 
-Options `init` and `processSample` are functions that are called with `this` being the decoding stream, which is a standard
-[Transform stream](https://nodejs.org/dist/latest-v5.x/docs/api/stream.html#stream_class_stream_transform).
+The functions you pass in `init` and `processSample` are called by the decoding stream and let you implement custom samples preprocessing like subsampling, filters, etc. In most cases using these hooks gives better performance than piping into a transform stream.
 
-- `init` is called in the constructor, use this to e.g. init variables
-- `processSample` is called each time a sample is read and the sample value is passed as first argument. Call `this.push(sample)` inside the function to output the value on the stream.
+Inside the functions `this` is set to the decoding stream instance, which is a standard [Transform stream](https://nodejs.org/dist/latest-v5.x/docs/api/stream.html#stream_class_stream_transform).
+
+- `init` is called in the constructor, you can use it to init the variables you need
+- `processSample` is called each time a sample is read and the sample value is passed as first argument. Call `this.push(value)` inside the function when you want to output a value on the stream (you don't have to do it each time)
 
 For example, this discards samples of the first channel :
 ```javascript
@@ -64,6 +71,7 @@ const readable = require('pcm-extract').getStream({
 });
 
 ```
+
 
 ## License
 
