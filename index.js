@@ -12,25 +12,46 @@ module.exports = {
   /**
    * Get readable stream of PCM data.
    *
-   * @param opts object with following keys
-   * - filepath      string   path to source file (required)
-   * - channels      number   number of audio channels, default 2
-   * - sampleRate    number   number of samples per channel per second, default 44100
-   * - start         number   start time in ms, default begining of file
-   * - end           number   end time in ms, default end of file
-   * - init          function hook to init decode stream
+   * @param opts object with following keys :
+   *
+   * - filepath string path to source file (required)
+   *
+   * - track number zero based index of track to read
+   *                if omitted defaults to first track
+   *
+   * - start number start time in ms, if omitted file is read from the beginning
+   *
+   * - end number end time in ms, if omitted file is read until the end
+   *
+   * - channels number number of audio channels in the output stream
+   *                   if input has more channels they will be downmixed
+   *                   if omitted all channels are included without modification
+   *
+   * - sampleRate number number of samples per channel per second in the output stream
+   *                     if input has a different sample rate it will be resampled
+   *                     if omitted output frequency is the same as input frequency
+   *
+   * - init function hook to init decode stream
+   *
    * - processSample function hook to process a decoded sample
    *
-   * @return Readable stream in object mode, each item is a sample value
-   *         values alternate between channels (L, R, L, R, ...)
+   * @return Readable stream in object mode, each item is a sample value,
+   *         values alternate between channels, so if you have 2 channels,
+   *         output looks like this :
+   *         - sample 0 : Channel 0, sample 0
+   *         - sample 1 : Channel 1, sample 0
+   *         - sample 2 : Channel 0, sample 1
+   *         - sample 3 : Channel 1, sample 1
+   *         - ...
    */
   getStream: function(opts) {
 
     const filepath   = opts.filepath   ;
-    const channels   = opts.channels   ||     2 ;
-    const sampleRate = opts.sampleRate || 44100 ;
+    const track      = opts.track      ;
     const start      = opts.start      ;
     const end        = opts.end        ;
+    const channels   = opts.channels   ;
+    const sampleRate = opts.sampleRate ;
 
     const fileStart    = start   !== undefined ?        start / 1000 :         0 ;
     const fileEnd      = end     !== undefined ?        end   / 1000 : undefined ;
@@ -42,20 +63,43 @@ module.exports = {
     // and pipe to stdout
 
     let args = [];
-    if (fileStart) {  // seek input if specified start is non zero
-      args = args.concat(['-ss', fileStart]);
+
+    // seek input if specified start is non zero
+    if (fileStart) {
+      args.push('-ss', fileStart);
     };
-    args = args.concat(['-i', filepath]);
+
+    // set input file
+    args.push('-i', filepath);
+
+    // set input duration if specified
     if (fileDuration !== undefined) {
-      args = args.concat(['-t', fileDuration]);
+      args.push('-t', fileDuration);
     }
-    args = args.concat([
-      '-f'     , 's16le'    ,
-      '-ac'    , channels   ,
-      '-acodec', 'pcm_s16le',
-      '-ar'    , sampleRate ,
-      '-y'     , 'pipe:1'   ,
-    ]);
+
+    // output format & codec
+    args.push('-f', 's16le');
+    args.push('-acodec', 'pcm_s16le');
+
+    // select audio track if specified
+    // (defaults to first track if omitted)
+    if (track !== undefined) {
+      args.push('-map', `0:a:${track}`);
+    }
+
+    // set output channels if specified
+    // (downmix if input has more, duplicate if input has less)
+    if (channels !== undefined) {
+      args.push('-ac', channels);
+    }
+    // set output frequency if specified
+    // (resample if input frequency is different)
+    if (sampleRate !== undefined) {
+      args.push('-ar', sampleRate);
+    }
+
+    // write output to stdout
+    args.push('pipe:');
 
     return require('child_process')
           .spawn('ffmpeg', args)
