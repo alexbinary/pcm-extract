@@ -6,6 +6,12 @@ This module lets you extract a [PCM representation](https://en.wikipedia.org/wik
 
 You need ffmpeg up and running to use this module.
 
+## Install
+
+```
+npm install pcm-extract
+```
+
 ## Basic usage
 
 ```javascript
